@@ -37,6 +37,7 @@ class PanFunc:
     
     def col_mean(self, c):
         return self.d[c].mean()
+    
 
     
     
