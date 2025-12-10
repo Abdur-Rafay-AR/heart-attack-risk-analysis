@@ -16,7 +16,14 @@ class NumPyfunc:
     def get_max(self):
         return np.max(self.a, axis=0)
     
+    def get_std(self):
+        return np.std(self.a, axis=0)
     
+    def get_col_values(self, c):
+        return self.d[c].to_numpy()
+    
+    
+
     
     
         
