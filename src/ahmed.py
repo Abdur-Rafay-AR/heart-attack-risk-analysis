@@ -50,6 +50,10 @@ class PanFunc:
     def sort_by(self, c):
         return self.d.sort_values(by=c)
     
+    def replace_vals(self, c, m):
+        return self.d[c].replace(m)
+    
+    
 
     
     
