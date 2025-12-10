@@ -12,3 +12,6 @@ class PandasProcessor:
     
     def column_sum(self):
         return self.df.sum(numeric_only=True)
+    
+    def describe_data(self):
+        return self.df.describe()
