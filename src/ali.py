@@ -25,5 +25,5 @@ class NumpyProcessor:
         self.data = pd.read_csv(file_path)
         self.array = self.data.select_dtypes(include=[np.number]).values    
 
-
-
+    def total_sum(self):
+        return np.sum(self.array)
