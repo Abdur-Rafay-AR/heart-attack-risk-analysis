@@ -15,3 +15,7 @@ class PandasProcessor:
     
     def describe_data(self):
         return self.df.describe()
+    
+    def correlation(self):
+        return self.df.corr(numeric_only=True)
+
