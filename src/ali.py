@@ -18,4 +18,12 @@ class PandasProcessor:
     
     def correlation(self):
         return self.df.corr(numeric_only=True)
+    
+class NumpyProcessor:
+
+    def __init__(self, file_path):
+        self.data = pd.read_csv(file_path)
+        self.array = self.data.select_dtypes(include=[np.number]).values    
+
+
 

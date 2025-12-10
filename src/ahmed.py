@@ -28,11 +28,15 @@ class NumPyfunc:
     def mul_arrays(self, x, y):
         return np.multiply(x, y)
     
-class NumpyProcessor:
-
-    def __init__(self, file_path):
-        self.data = pd.read_csv(file_path)
-        self.array = self.data.select_dtypes(include=[np.number]).values
+class PanFunc:
+    def __init__(self, d):
+        self.d = d
+    
+    def head_rows(self, n):
+        return self.d.head(n)
+    
+    def col_mean(self, c):
+        return self.d[c].mean()
 
     
     
