@@ -22,6 +22,11 @@ class NumPyfunc:
     def get_col_values(self, c):
         return self.d[c].to_numpy()
     
+    def add_arrays(self, x, y):
+        return np.add(x, y)
+    
+    def mul_arrays(self, x, y):
+        return np.multiply(x, y)
     
 
     
