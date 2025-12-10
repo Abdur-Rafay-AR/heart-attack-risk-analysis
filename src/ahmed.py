@@ -53,7 +53,9 @@ class PanFunc:
     def replace_vals(self, c, m):
         return self.d[c].replace(m)
     
-    
+    def add_col(self, name, vals):
+        self.d[name] = vals
+        return self.d
 
     
     
