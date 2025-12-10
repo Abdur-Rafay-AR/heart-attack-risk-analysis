@@ -41,6 +41,15 @@ class PanFunc:
     def col_sum(self, c):
         return self.d[c].sum()
     
+    def col_unique(self, c):
+        return self.d[c].unique()
+    
+    def filter_eq(self, c, v):
+        return self.d[self.d[c] == v]
+    
+    def sort_by(self, c):
+        return self.d.sort_values(by=c)
+    
 
     
     
