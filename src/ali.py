@@ -27,3 +27,12 @@ class NumpyProcessor:
 
     def total_sum(self):
         return np.sum(self.array)
+    
+    def find_mean(self):
+        return np.mean(self.array)
+
+    def find_median(self):
+        return np.median(self.array)
+
+    def find_std(self):
+        return np.std(self.array)
