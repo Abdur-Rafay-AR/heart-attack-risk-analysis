@@ -56,6 +56,7 @@ class PanFunc:
     def add_col(self, name, vals):
         self.d[name] = vals
         return self.d
+    # Ahmed before matplotlib
 
     
     
