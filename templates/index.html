@@ -4,6 +4,17 @@
 
 {% block content %}
 <div class="container">
+    <div class="hero">
+        <h1><i class="fas fa-heartbeat"></i> Heart Attack Risk Analysis</h1>
+        <p>Advanced Data Analytics & Visualization Platform</p>
+    </div>
+
+    {% if summary.error %}
+    <div class="alert alert-error">
+        <i class="fas fa-exclamation-circle"></i>
+        <span>{{ summary.error }}</span>
+    </div>
+    {% else %}
 
 </div>
 {% endblock %}
