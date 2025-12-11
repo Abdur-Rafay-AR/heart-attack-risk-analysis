@@ -1,6 +1,8 @@
-#Ali's working filei
+#Ali's working file
+
 import pandas as pd
 import numpy as np
+
 class PandasProcessor:
     
     def __init__(self, file_path):
@@ -8,3 +10,30 @@ class PandasProcessor:
 
     def column_mean(self):
         return self.df.mean(numeric_only=True)
+    
+    def column_sum(self):
+        return self.df.sum(numeric_only=True)
+    
+    def describe_data(self):
+        return self.df.describe()
+    
+    def correlation(self):
+        return self.df.corr(numeric_only=True)
+    
+class NumpyProcessor:
+
+    def __init__(self, file_path):
+        self.data = pd.read_csv(file_path)
+        self.array = self.data.select_dtypes(include=[np.number]).values    
+
+    def total_sum(self):
+        return np.sum(self.array)
+    
+    def find_mean(self):
+        return np.mean(self.array)
+
+    def find_median(self):
+        return np.median(self.array)
+
+    def find_std(self):
+        return np.std(self.array)
