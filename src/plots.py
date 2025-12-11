@@ -23,3 +23,14 @@ class ScatterPlotter:
         plt.xlabel(x_col)
         plt.ylabel(y_col)
         plt.show()
+
+class HistogramPlotter:
+    def __init__(self, df):
+        self.df = df
+
+    def histogram(self, column):
+        plt.hist(self.df[column])
+        plt.title(f"{column} Histogram")
+        plt.xlabel(column)
+        plt.ylabel("Frequency")
+        plt.show()
