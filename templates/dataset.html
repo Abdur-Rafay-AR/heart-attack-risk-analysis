@@ -5,19 +5,35 @@
 {% block content %}
 <div class="container">
     <div class="hero-section">
-        <h1 class="glitch-text" data-text="Dataset Visualizations">Dataset Visualizations</h1>
-        <p>Select a visualization to analyze the heart attack risk factors</p>
+        <h1>Dataset Visualizations</h1>
+        <p>Explore interactive data visualizations analyzing heart attack risk factors</p>
+    </div>
+
+    <div class="viz-description glass-panel" style="margin-bottom: 2rem; padding: 1.5rem; border-radius: 15px;">
+        <p style="text-align: center; color: var(--text-muted); margin: 0;">
+            <i class="fas fa-info-circle" style="color: var(--accent-color); margin-right: 0.5rem;"></i>
+            Click on any visualization to view detailed insights from our heart health dataset
+        </p>
     </div>
 
     <div class="cards-grid">
         {% for plot in plots %}
-        <div class="card glass-panel">
+        <div class="card glass-panel viz-card">
             <div class="card-header">
                 <i class="fas fa-chart-pie"></i>
                 <h3>{{ plot.name }}</h3>
             </div>
             <div class="plot-wrapper">
-                <img src="{{ url_for('plot', plotname=plot.id) }}" alt="{{ plot.name }}" class="plot-image">
+                <div class="plot-loading">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <p>Loading visualization...</p>
+                </div>
+                <img src="{{ url_for('plot', plotname=plot.id) }}"
+                     alt="{{ plot.name }}"
+                     class="plot-image"
+                     loading="lazy"
+                     onload="this.previousElementSibling.style.display='none'; this.style.opacity='1';"
+                     onerror="var wrapper=this.parentElement; wrapper.innerHTML='<div class=\"plot-error\"><i class=\"fas fa-exclamation-triangle\"></i></div>
             </div>
         </div>
         {% endfor %}
@@ -29,22 +45,70 @@
 </div>
 
 <style>
+    .cards-grid {
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    }
+
     .plot-wrapper {
         border-radius: 10px;
         overflow: hidden;
         border: 1px solid var(--glass-border);
         transition: all 0.3s;
+        position: relative;
+        min-height: 300px;
+        background: #0a0a0a;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .plot-loading {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        text-align: center;
+        color: var(--accent-color);
+        z-index: 1;
+    }
+    
+    .plot-loading i {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .plot-error {
+        text-align: center;
+        color: #ff4d4d;
+        padding: 2rem;
+    }
+    
+    .plot-error i {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
     }
     
     .plot-image {
         width: 100%;
         height: auto;
         display: block;
-        transition: transform 0.5s;
+        transition: transform 0.5s, opacity 0.3s;
+        position: relative;
+        z-index: 2;
+        opacity: 0;
     }
     
-    .card:hover .plot-image {
-        transform: scale(1.05);
+    .plot-image[src] {
+        opacity: 1;
+    }
+    
+    .viz-card:hover .plot-wrapper {
+        border-color: var(--accent-color);
+        box-shadow: 0 0 20px rgba(191, 18, 77, 0.3);
+    }
+    
+    .viz-card:hover .plot-image {
+        transform: scale(1.02);
     }
 </style>
 {% endblock %}

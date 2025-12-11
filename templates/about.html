@@ -5,12 +5,12 @@
 {% block content %}
 <div class="container">
     <div class="hero-section">
-        <h1 class="glitch-text" data-text="About The Project">About The Project</h1>
+        <h1>About The Project</h1>
         <p class="subtitle">Unveiling the patterns in heart health data</p>
     </div>
 
     <div class="content-grid">
-        <div class="info-card glass-panel">
+        <div class="info-card glass-panel feature-card">
             <div class="card-header">
                 <i class="fas fa-project-diagram"></i>
                 <h2>Project Overview</h2>
@@ -19,39 +19,59 @@
                 This Heart Attack Risk Analysis project leverages advanced data analytics to identify key indicators of heart disease. 
                 By visualizing complex medical data, we aim to provide accessible insights into risk factors such as age, cholesterol levels, and heart rate.
             </p>
+            <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--glass-border);">
+                <p style="color: var(--text-muted); font-size: 0.9rem;">
+                    <i class="fas fa-lightbulb" style="color: var(--accent-color);"></i> 
+                    Built with modern web technologies and data science tools
+                </p>
+            </div>
         </div>
 
-        <div class="info-card glass-panel">
+        <div class="info-card glass-panel feature-card">
             <div class="card-header">
                 <i class="fas fa-database"></i>
                 <h2>The Dataset</h2>
             </div>
-            <p>
-                The dataset contains medical records of patients, including attributes like:
+            <p style="margin-bottom: 1rem;">
+                The dataset contains comprehensive medical records of patients, including:
             </p>
             <ul class="feature-list">
-                <li><i class="fas fa-check"></i> Age & Sex</li>
-                <li><i class="fas fa-check"></i> Chest Pain Type (cp)</li>
-                <li><i class="fas fa-check"></i> Resting Blood Pressure (trtbps)</li>
-                <li><i class="fas fa-check"></i> Cholesterol (chol)</li>
-                <li><i class="fas fa-check"></i> Maximum Heart Rate (thalachh)</li>
+                <li><i class="fas fa-check-circle"></i> Age & Sex Demographics</li>
+                <li><i class="fas fa-check-circle"></i> Chest Pain Type (cp)</li>
+                <li><i class="fas fa-check-circle"></i> Resting Blood Pressure (trtbps)</li>
+                <li><i class="fas fa-check-circle"></i> Serum Cholesterol (chol)</li>
+                <li><i class="fas fa-check-circle"></i> Maximum Heart Rate (thalachh)</li>
+                <li><i class="fas fa-check-circle"></i> Exercise Induced Angina</li>
+                <li><i class="fas fa-check-circle"></i> ST Depression (oldpeak)</li>
             </ul>
         </div>
 
-        <div class="info-card glass-panel">
+        <div class="info-card glass-panel feature-card">
             <div class="card-header">
                 <i class="fas fa-code"></i>
                 <h2>Tech Stack</h2>
             </div>
+            <p style="margin-bottom: 1rem; color: var(--text-muted);">
+                Powered by industry-leading technologies:
+            </p>
             <div class="tech-tags">
-                <span class="tag">Python</span>
-                <span class="tag">Flask</span>
-                <span class="tag">Pandas</span>
-                <span class="tag">Seaborn</span>
-                <span class="tag">Matplotlib</span>
-                <span class="tag">HTML5/CSS3</span>
+                <span class="tag"><i class="fab fa-python"></i> Python</span>
+                <span class="tag"><i class="fas fa-flask"></i> Flask</span>
+                <span class="tag"><i class="fas fa-table"></i> Pandas</span>
+                <span class="tag"><i class="fas fa-chart-area"></i> Seaborn</span>
+                <span class="tag"><i class="fas fa-chart-line"></i> Matplotlib</span>
+                <span class="tag"><i class="fab fa-html5"></i> HTML5/CSS3</span>
+                <span class="tag"><i class="fab fa-js"></i> JavaScript</span>
             </div>
         </div>
+    </div>
+    
+    <div class="cta-section" style="margin-top: 3rem; text-align: center; padding: 3rem; background: var(--glass-bg); border-radius: 15px; border: 1px solid var(--glass-border);">
+        <h2 style="color: var(--white); margin-bottom: 1rem;">Ready to Explore?</h2>
+        <p style="color: var(--text-muted); margin-bottom: 2rem;">Dive into the data and discover meaningful insights</p>
+        <a href="{{ url_for('dataset_page') }}" class="btn btn-primary" style="font-size: 1.1rem; padding: 1rem 2.5rem;">
+            <i class="fas fa-chart-bar"></i> View Visualizations
+        </a>
     </div>
 </div>
 {% endblock %}

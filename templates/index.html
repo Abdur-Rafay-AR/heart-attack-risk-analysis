@@ -5,7 +5,7 @@
 {% block content %}
 <div class="container">
     <div class="hero-section">
-        <h1 class="glitch-text" data-text="Heart Attack Risk Analysis"><i class="fas fa-heartbeat"></i> Heart Attack Risk Analysis</h1>
+        <h1><i class="fas fa-heartbeat"></i> Heart Attack Risk Analysis</h1>
         <p>Advanced Data Analytics & Visualization Platform</p>
     </div>
 
@@ -36,22 +36,31 @@
     {% endif %}
 
     <div class="cards-grid">
-        <div class="card glass-panel">
+        <div class="card glass-panel feature-card">
             <div class="card-icon">
-                <i class="fas fa-table"></i>
+                <i class="fas fa-chart-line"></i>
             </div>
-            <h3>Dataset Overview</h3>
-            <p>Explore the complete heart attack risk dataset with detailed attributes and patient information.</p>
-            <a href="{{ url_for('dataset_page') }}" class="btn btn-primary">View Visualizations</a>
+            <h3>Dataset Visualizations</h3>
+            <p>Explore interactive charts and graphs analyzing heart attack risk factors across multiple dimensions.</p>
+            <a href="{{ url_for('dataset_page') }}" class="btn btn-primary"><i class="fas fa-chart-bar"></i> View Visualizations</a>
         </div>
 
-        <div class="card glass-panel">
+        <div class="card glass-panel feature-card">
+            <div class="card-icon">
+                <i class="fas fa-heartbeat"></i>
+            </div>
+            <h3>Health Analytics</h3>
+            <p>Deep dive into medical attributes including cholesterol levels, blood pressure, and heart rate patterns.</p>
+            <a href="{{ url_for('dataset_page') }}" class="btn btn-primary"><i class="fas fa-microscope"></i> Analyze Data</a>
+        </div>
+        
+        <div class="card glass-panel feature-card">
             <div class="card-icon">
                 <i class="fas fa-info-circle"></i>
             </div>
             <h3>About the Project</h3>
-            <p>This project analyzes various health metrics to predict and visualize heart attack risks using advanced data processing.</p>
-            <a href="{{ url_for('about') }}" class="btn btn-primary">Learn More</a>
+            <p>Learn about our methodology, technology stack, and the dataset powering these insights.</p>
+            <a href="{{ url_for('about') }}" class="btn btn-primary"><i class="fas fa-book-open"></i> Learn More</a>
         </div>
     </div>
 
