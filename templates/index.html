@@ -15,6 +15,24 @@
         <span>{{ summary.error }}</span>
     </div>
     {% else %}
+    <div class="stats-grid">
+        <div class="stat-box">
+            <span class="stat-number">{{ summary.rows }}</span>
+            <span class="stat-label">Total Records</span>
+        </div>
+        <div class="stat-box">
+            <span class="stat-number">{{ summary.cols }}</span>
+            <span class="stat-label">Data Features</span>
+        </div>
+        <div class="stat-box">
+            <span class="stat-number">{{ summary.columns|length }}</span>
+            <span class="stat-label">Attributes</span>
+        </div>
+        <div class="stat-box">
+            <span class="stat-number"><i class="fas fa-check-circle"></i></span>
+            <span class="stat-label">Data Loaded</span>
+        </div>
+    </div>
 
 </div>
 {% endblock %}
