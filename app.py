@@ -81,7 +81,7 @@ def generate_insights(df):
                 f"Avg BMI (At Risk): <strong>{avg_bmi_risk:.1f}</strong>",
                 f"Avg BMI (Healthy): <strong>{avg_bmi_healthy:.1f}</strong>"
             ],
-            "description": "Body Mass Index (BMI) distribution shows distinct patterns between risk groups, highlighting obesity as a potential contributor."
+            "description": "The box plot compares the median and spread of Body Mass Index (BMI) between risk groups, highlighting potential differences in distribution and outliers."
         }
 
         # 5. Lifestyle Factors
@@ -121,10 +121,64 @@ def generate_insights(df):
             "description": "This chart provides a high-level view of the dataset's balance between at-risk and healthy individuals."
         }
 
+        # 8. Heart Rate Line Plot
+        avg_hr_by_age = df.groupby('Age')['Heart Rate'].mean()
+        peak_hr_age = avg_hr_by_age.idxmax()
+        
+        insights['heart_rate_line'] = {
+            "title": "Heart Rate Trends",
+            "stats": [
+                f"Peak Average Heart Rate Age: <strong>{peak_hr_age} years</strong>",
+                f"Max Average Heart Rate: <strong>{avg_hr_by_age.max():.1f} bpm</strong>"
+            ],
+            "description": "This line plot visualizes how the average heart rate changes across different ages, highlighting potential age-related trends."
+        }
+
+        # 9. Medical Indicators Correlation Heatmap
+        # Ensure Systolic_BP is available (it might be created in step 3, but good to be safe)
+        if 'Systolic_BP' not in df.columns:
+            df['Systolic_BP'] = df['Blood Pressure'].str.split('/').str[0].astype(float)
+            
+        target_cols = ['Age', 'Cholesterol', 'Heart Rate', 'BMI', 'Systolic_BP', 'Heart Attack Risk']
+        # Filter for columns that actually exist
+        existing_cols = [c for c in target_cols if c in df.columns]
+        
+        corr_matrix = df[existing_cols].corr()
+        
+        # Find strongest correlation with Risk (excluding Risk itself)
+        if 'Heart Attack Risk' in corr_matrix.columns:
+            risk_corr = corr_matrix['Heart Attack Risk'].drop('Heart Attack Risk')
+            strongest_feature = risk_corr.abs().idxmax()
+            strongest_val = risk_corr[strongest_feature]
+        else:
+            strongest_feature = "N/A"
+            strongest_val = 0.0
+        
+        insights['correlation_heatmap'] = {
+            "title": "Medical Correlations",
+            "stats": [
+                f"Strongest Risk Predictor: <strong>{strongest_feature}</strong>",
+                f"Correlation Coefficient: <strong>{strongest_val:.2f}</strong>"
+            ],
+            "description": "This heatmap focuses specifically on physiological measurements (Age, BMI, BP, etc.) to identify which medical indicators have the strongest relationship with heart attack risk."
+        }
+
+        # 10. Cholesterol Area Plot
+        avg_chol_by_age = df.groupby('Age')['Cholesterol'].mean()
+        
+        insights['cholesterol_area'] = {
+            "title": "Cholesterol Accumulation",
+            "stats": [
+                f"Highest Avg Cholesterol: <strong>{avg_chol_by_age.max():.1f} mg/dL</strong>",
+                f"Age with Highest Cholesterol: <strong>{avg_chol_by_age.idxmax()} years</strong>"
+            ],
+            "description": "The area plot shows the magnitude of average cholesterol levels across the age spectrum."
+        }
+
     except Exception as e:
         print(f"Error generating insights: {e}")
         # Fallback for all keys if something fails
-        for key in ['age_distribution', 'risk_by_gender', 'cholesterol_bp', 'bmi_analysis', 'lifestyle_factors', 'age_groups', 'risk_distribution_pie']:
+        for key in ['age_distribution', 'risk_by_gender', 'cholesterol_bp', 'bmi_analysis', 'lifestyle_factors', 'age_groups', 'risk_distribution_pie', 'heart_rate_line', 'correlation_heatmap', 'cholesterol_area']:
             if key not in insights:
                 insights[key] = {
                     "title": "Analysis Unavailable",
@@ -158,13 +212,16 @@ def dataset_page():
 
     # Define available plots
     plot_names = [
-        {"id": "age_distribution", "name": "Age Distribution by Risk"},
-        {"id": "risk_by_gender", "name": "Heart Attack Risk by Gender"},
-        {"id": "cholesterol_bp", "name": "Cholesterol vs Blood Pressure"},
-        {"id": "bmi_analysis", "name": "BMI Distribution by Risk"},
-        {"id": "lifestyle_factors", "name": "Lifestyle Risk Factors"},
-        {"id": "age_groups", "name": "Risk Distribution Across Age Groups"},
-        {"id": "risk_distribution_pie", "name": "Overall Risk Distribution"},
+        {"id": "age_distribution", "name": "Age Distribution by Risk (Histogram)"},
+        {"id": "risk_by_gender", "name": "Heart Attack Risk by Gender (Bar Chart)"},
+        {"id": "cholesterol_bp", "name": "Cholesterol vs Blood Pressure (Scatter Plot)"},
+        {"id": "bmi_analysis", "name": "BMI Distribution by Risk (Box Plot)"},
+        {"id": "lifestyle_factors", "name": "Lifestyle Risk Factors (Bar Chart)"},
+        {"id": "age_groups", "name": "Risk Distribution Across Age Groups (Stacked Bar)"},
+        {"id": "risk_distribution_pie", "name": "Overall Risk Distribution (Pie Chart)"},
+        {"id": "heart_rate_line", "name": "Avg Heart Rate by Age (Line Plot)"},
+        {"id": "correlation_heatmap", "name": "Feature Correlation (Heatmap)"},
+        {"id": "cholesterol_area", "name": "Cholesterol Levels by Age (Area Plot)"},
     ]
 
     # Generate insights
@@ -282,8 +339,8 @@ def plot(plotname):
         
         # Create figure based on plot type
         figsize = (12, 7)
-        if plotname in ["cholesterol_bp", "bmi_analysis", "lifestyle_factors", "risk_distribution_pie"]:
-            figsize = (8, 5)
+        if plotname in ["cholesterol_bp", "bmi_analysis", "lifestyle_factors", "risk_distribution_pie", "correlation_heatmap"]:
+            figsize = (8, 6)
             
         fig, ax = plt.subplots(figsize=figsize, facecolor='#1a1a1a')
         
@@ -326,9 +383,9 @@ def plot(plotname):
             plt.setp(plt.getp(cbar.ax.axes, 'yticklabels'), color='#e0e0e0')
             
         elif plotname == "bmi_analysis":
-            # Violin plot for BMI distribution
-            sns.violinplot(data=df, x='Heart Attack Risk', y='BMI', 
-                          palette=risk_colors, ax=ax, inner='quartile')
+            # Box plot for BMI distribution
+            sns.boxplot(data=df, x='Heart Attack Risk', y='BMI', 
+                          palette=risk_colors, ax=ax)
             ax.set_title("BMI Distribution by Risk Status", fontsize=18, fontweight='bold', color='white', pad=20)
             ax.set_xlabel('Heart Attack Risk', fontsize=13, color='#e0e0e0')
             ax.set_ylabel('BMI (Body Mass Index)', fontsize=13, color='#e0e0e0')
@@ -423,12 +480,50 @@ def plot(plotname):
             # Ensure aspect ratio is equal so pie is drawn as a circle
             ax.axis('equal')
             
+        elif plotname == "heart_rate_line":
+            # Line Plot: Average Heart Rate by Age
+            avg_hr = df.groupby('Age')['Heart Rate'].mean()
+            avg_hr.plot(kind='line', color=colors[2], ax=ax, linewidth=2, marker='o', markersize=4)
+            ax.set_title("Average Heart Rate by Age", fontsize=18, fontweight='bold', color='white', pad=20)
+            ax.set_xlabel('Age (years)', fontsize=13, color='#e0e0e0')
+            ax.set_ylabel('Average Heart Rate (bpm)', fontsize=13, color='#e0e0e0')
+            ax.grid(True, alpha=0.2)
+
+        elif plotname == "correlation_heatmap":
+            # Heatmap: Medical Indicators Correlation
+            # Create Systolic BP if not exists
+            if 'Systolic_BP' not in df.columns:
+                df['Systolic_BP'] = df['Blood Pressure'].str.split('/').str[0].astype(float)
+            
+            cols_to_plot = ['Age', 'Cholesterol', 'Heart Rate', 'BMI', 'Systolic_BP', 'Heart Attack Risk']
+            # Filter only existing columns
+            cols_to_plot = [c for c in cols_to_plot if c in df.columns]
+            
+            corr = df[cols_to_plot].corr()
+            
+            sns.heatmap(corr, annot=True, fmt=".2f", cmap='RdYlBu_r', ax=ax, 
+                       cbar_kws={'label': 'Correlation Coefficient'}, vmin=-1, vmax=1)
+            ax.set_title("Medical Indicators Correlation Matrix", fontsize=18, fontweight='bold', color='white', pad=20)
+            # Fix for heatmap labels being cut off
+            plt.xticks(rotation=45, ha='right')
+            plt.yticks(rotation=0)
+
+        elif plotname == "cholesterol_area":
+            # Area Plot: Average Cholesterol by Age
+            avg_chol = df.groupby('Age')['Cholesterol'].mean()
+            ax.fill_between(avg_chol.index, avg_chol.values, color=colors[2], alpha=0.4)
+            ax.plot(avg_chol.index, avg_chol.values, color=colors[3], linewidth=2)
+            ax.set_title("Average Cholesterol Levels by Age", fontsize=18, fontweight='bold', color='white', pad=20)
+            ax.set_xlabel('Age (years)', fontsize=13, color='#e0e0e0')
+            ax.set_ylabel('Cholesterol (mg/dL)', fontsize=13, color='#e0e0e0')
+            ax.grid(True, alpha=0.2)
+
         else:
             plt.close(fig)
             return abort(404)
         
-        # Apply consistent dark theme styling (skip for pie charts)
-        if plotname != "risk_distribution_pie":
+        # Apply consistent dark theme styling (skip for pie charts and heatmaps)
+        if plotname not in ["risk_distribution_pie", "correlation_heatmap"]:
             ax.set_facecolor('#0a0a0a')
             ax.tick_params(colors='#e0e0e0', labelsize=10)
             ax.spines['bottom'].set_color('#e0e0e0')
