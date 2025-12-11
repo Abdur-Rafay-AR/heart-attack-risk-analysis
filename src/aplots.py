@@ -29,3 +29,10 @@ class LinePlot:
         plt.ylabel("Values")
         plt.xlabel("Index")
         plt.show()
+
+class Heatmap:
+    def draw(self, data):
+        plt.imshow(data, aspect="auto")
+        plt.colorbar()
+        plt.title("Correlation Heatmap")
+        plt.show()        
