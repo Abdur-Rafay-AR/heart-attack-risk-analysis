@@ -8,12 +8,24 @@ class BarChart:
         plt.xlabel("X")
         plt.ylabel("Y")
         plt.show()
-        
-import matplotlib.pyplot as plt
 
 class BoxPlot:
     def draw(self, data):
         plt.boxplot(data)
         plt.title("Box Plot")
         plt.ylabel("Values")
+        plt.show()
+
+class PieChart:
+    def draw(self, data):
+        plt.pie(data, autopct="%1.1f%%")
+        plt.title("Pie Chart")
+        plt.show()
+
+class LinePlot:
+    def draw(self, y):
+        plt.plot(y)
+        plt.title("Line Plot")
+        plt.ylabel("Values")
+        plt.xlabel("Index")
         plt.show()
