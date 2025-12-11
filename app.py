@@ -21,6 +21,119 @@ def get_data():
     processor = PandasProcessor(DATA_PATH)
     return processor.df
 
+def generate_insights(df):
+    """Generate insights for each plot using numpy and pandas"""
+    insights = {}
+    
+    try:
+        # 1. Age Distribution Insights
+        risk_age = df[df['Heart Attack Risk'] == 1]['Age']
+        no_risk_age = df[df['Heart Attack Risk'] == 0]['Age']
+        
+        avg_risk_age = np.mean(risk_age)
+        avg_no_risk_age = np.mean(no_risk_age)
+        
+        insights['age_distribution'] = {
+            "title": "Age & Risk Correlation",
+            "stats": [
+                f"Average age of at-risk patients: <strong>{avg_risk_age:.1f} years</strong>",
+                f"Average age of healthy patients: <strong>{avg_no_risk_age:.1f} years</strong>",
+                f"Age difference: <strong>{abs(avg_risk_age - avg_no_risk_age):.1f} years</strong>"
+            ],
+            "description": f"Patients at risk are on average {'older' if avg_risk_age > avg_no_risk_age else 'younger'} than those not at risk. The data suggests age is a significant factor."
+        }
+
+        # 2. Gender Risk Insights
+        gender_risk = df.groupby('Sex')['Heart Attack Risk'].mean() * 100
+        male_risk = gender_risk.get('Male', 0)
+        female_risk = gender_risk.get('Female', 0)
+        
+        insights['risk_by_gender'] = {
+            "title": "Gender Disparity",
+            "stats": [
+                f"Male Risk Rate: <strong>{male_risk:.1f}%</strong>",
+                f"Female Risk Rate: <strong>{female_risk:.1f}%</strong>"
+            ],
+            "description": f"{'Males' if male_risk > female_risk else 'Females'} show a higher susceptibility to heart attack risk in this dataset."
+        }
+
+        # 3. Cholesterol vs BP Insights
+        df['Systolic_BP'] = df['Blood Pressure'].str.split('/').str[0].astype(float)
+        correlation = np.corrcoef(df['Cholesterol'], df['Systolic_BP'])[0, 1]
+        avg_chol_risk = np.mean(df[df['Heart Attack Risk'] == 1]['Cholesterol'])
+        
+        insights['cholesterol_bp'] = {
+            "title": "Vital Signs Correlation",
+            "stats": [
+                f"Cholesterol-BP Correlation: <strong>{correlation:.2f}</strong>",
+                f"Avg Cholesterol (At Risk): <strong>{avg_chol_risk:.1f} mg/dL</strong>"
+            ],
+            "description": "The scatter plot reveals the relationship between cholesterol levels and blood pressure. Higher values in both metrics often correlate with increased risk."
+        }
+
+        # 4. BMI Analysis
+        avg_bmi_risk = np.mean(df[df['Heart Attack Risk'] == 1]['BMI'])
+        avg_bmi_healthy = np.mean(df[df['Heart Attack Risk'] == 0]['BMI'])
+        
+        insights['bmi_analysis'] = {
+            "title": "BMI Impact",
+            "stats": [
+                f"Avg BMI (At Risk): <strong>{avg_bmi_risk:.1f}</strong>",
+                f"Avg BMI (Healthy): <strong>{avg_bmi_healthy:.1f}</strong>"
+            ],
+            "description": "Body Mass Index (BMI) distribution shows distinct patterns between risk groups, highlighting obesity as a potential contributor."
+        }
+
+        # 5. Lifestyle Factors
+        factors = ['Smoking', 'Diabetes', 'Obesity', 'Alcohol Consumption']
+        risk_factors = df[df['Heart Attack Risk'] == 1][factors].mean() * 100
+        top_factor = risk_factors.idxmax()
+        
+        insights['lifestyle_factors'] = {
+            "title": "Lifestyle Contributors",
+            "stats": [f"{factor}: <strong>{val:.1f}%</strong> prevalence in at-risk group" for factor, val in risk_factors.items()],
+            "description": f"<strong>{top_factor}</strong> appears to be the most prevalent lifestyle factor among patients at risk of heart attack."
+        }
+
+        # 6. Age Groups
+        df['Age_Group'] = pd.cut(df['Age'], bins=[0, 30, 45, 60, 75, 100], labels=['<30', '30-45', '45-60', '60-75', '75+'])
+        age_risk_rates = df.groupby('Age_Group')['Heart Attack Risk'].mean() * 100
+        highest_risk_group = age_risk_rates.idxmax()
+        
+        insights['age_groups'] = {
+            "title": "Age Group Vulnerability",
+            "stats": [
+                f"Highest Risk Group: <strong>{highest_risk_group}</strong>",
+                f"Risk Rate in {highest_risk_group}: <strong>{age_risk_rates.max():.1f}%</strong>"
+            ],
+            "description": "Risk levels vary significantly across different age brackets, with specific groups showing markedly higher vulnerability."
+        }
+
+        # 7. Overall Distribution
+        total_risk_rate = df['Heart Attack Risk'].mean() * 100
+        
+        insights['risk_distribution_pie'] = {
+            "title": "Population Overview",
+            "stats": [
+                f"Overall Population at Risk: <strong>{total_risk_rate:.1f}%</strong>",
+                f"Total Patients: <strong>{len(df)}</strong>"
+            ],
+            "description": "This chart provides a high-level view of the dataset's balance between at-risk and healthy individuals."
+        }
+
+    except Exception as e:
+        print(f"Error generating insights: {e}")
+        # Fallback for all keys if something fails
+        for key in ['age_distribution', 'risk_by_gender', 'cholesterol_bp', 'bmi_analysis', 'lifestyle_factors', 'age_groups', 'risk_distribution_pie']:
+            if key not in insights:
+                insights[key] = {
+                    "title": "Analysis Unavailable",
+                    "stats": [],
+                    "description": "Could not generate insights for this visualization."
+                }
+                
+    return insights
+
 @app.route("/")
 def index():
     summary = {}
@@ -53,6 +166,14 @@ def dataset_page():
         {"id": "age_groups", "name": "Risk Distribution Across Age Groups"},
         {"id": "risk_distribution_pie", "name": "Overall Risk Distribution"},
     ]
+
+    # Generate insights
+    insights = generate_insights(df)
+    
+    # Attach insights to plot objects
+    for plot in plot_names:
+        if plot['id'] in insights:
+            plot['insight'] = insights[plot['id']]
 
     return render_template("dataset.html", plots=plot_names)
 
