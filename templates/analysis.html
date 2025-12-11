@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+
+{% block title %}Numpy Analysis - Heart Attack Risk{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="hero-section">
+        <h1><i class="fas fa-calculator"></i> NumPy Statistical Analysis</h1>
+        <p>Deep dive into dataset statistics using NumPy power</p>
+    </div>
+
+    <div class="viz-description glass-panel" style="margin-bottom: 2rem; padding: 1.5rem; border-radius: 15px;">
+        <p style="text-align: center; color: var(--text-muted); margin: 0;">
+            <i class="fas fa-info-circle" style="color: var(--accent-color); margin-right: 0.5rem;"></i>
+            These statistics are computed in real-time using NumPy for high-performance numerical analysis.
+        </p>
+    </div>
+
+    <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); margin-bottom: 3rem;">
+        {% for stat_name, stat_data in basic_stats.items() %}
+        <div class="card glass-panel">
+            <div class="card-header" style="border-bottom: 1px solid var(--glass-border); padding-bottom: 1rem; margin-bottom: 1rem;">
+                <h3>{{ stat_name }}</h3>
+            </div>
+            <div class="stat-details">
+                <div class="stat-row">
+                    <span>Mean:</span>
+                    <strong>{{ "%.2f"|format(stat_data.mean) }}</strong>
+                </div>
+                <div class="stat-row">
+                    <span>Median:</span>
+                    <strong>{{ "%.2f"|format(stat_data.median) }}</strong>
+                </div>
+                <div class="stat-row">
+                    <span>Std Dev:</span>
+                    <strong>{{ "%.2f"|format(stat_data.std) }}</strong>
+                </div>
+                <div class="stat-row">
+                    <span>Min/Max:</span>
+                    <strong>{{ "%.0f"|format(stat_data.min) }} / {{ "%.0f"|format(stat_data.max) }}</strong>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="section">
+        <h2 class="section-title">Advanced NumPy Insights</h2>
+        <div class="cards-grid">
+            <div class="card glass-panel">
+                <h3><i class="fas fa-project-diagram"></i> Correlation Matrix</h3>
+                <p class="text-muted">Pearson correlation coefficients calculated using <code>np.corrcoef</code></p>
+                <div class="table-container" style="margin-top: 1rem;">
+                    <table class="correlation-table">
+                        <thead>
+                            <tr>
+                                <th>Factor</th>
+                                <th>Cholesterol</th>
+                                <th>Heart Rate</th>
+                                <th>BMI</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Cholesterol</strong></td>
+                                <td>1.00</td>
+                                <td>{{ "%.3f"|format(correlations.chol_hr) }}</td>
+                                <td>{{ "%.3f"|format(correlations.chol_bmi) }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Heart Rate</strong></td>
+                                <td>{{ "%.3f"|format(correlations.chol_hr) }}</td>
+                                <td>1.00</td>
+                                <td>{{ "%.3f"|format(correlations.hr_bmi) }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>BMI</strong></td>
+                                <td>{{ "%.3f"|format(correlations.chol_bmi) }}</td>
+                                <td>{{ "%.3f"|format(correlations.hr_bmi) }}</td>
+                                <td>1.00</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card glass-panel">
+                <h3><i class="fas fa-users"></i> Risk Group Analysis</h3>
+                <p class="text-muted">Comparative statistics between risk groups using boolean indexing</p>
+                <div class="stat-details" style="margin-top: 1rem;">
+                    <div class="stat-row">
+                        <span>Avg Age (At Risk):</span>
+                        <strong style="color: var(--accent-color);">{{ "%.1f"|format(risk_stats.risk_age_mean) }}</strong>
+                    </div>
+                    <div class="stat-row">
+                        <span>Avg Age (No Risk):</span>
+                        <strong style="color: #4caf50;">{{ "%.1f"|format(risk_stats.no_risk_age_mean) }}</strong>
+                    </div>
+                    <div class="stat-row" style="margin-top: 1rem; border-top: 1px solid var(--glass-border); padding-top: 1rem;">
+                        <span>Avg Cholesterol (At Risk):</span>
+                        <strong style="color: var(--accent-color);">{{ "%.1f"|format(risk_stats.risk_chol_mean) }}</strong>
+                    </div>
+                    <div class="stat-row">
+                        <span>Avg Cholesterol (No Risk):</span>
+                        <strong style="color: #4caf50;">{{ "%.1f"|format(risk_stats.no_risk_chol_mean) }}</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div style="margin-top: 3rem; text-align: center;">
+        <a href="{{ url_for('index') }}" class="btn btn-primary"><i class="fas fa-home"></i> Back to Home</a>
+    </div>
+</div>
+
+<style>
+    .stat-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.5rem 0;
+        border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    .stat-row:last-child {
+        border-bottom: none;
+    }
+    .correlation-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    .correlation-table th, .correlation-table td {
+        padding: 0.8rem;
+        text-align: center;
+        border: 1px solid rgba(255,255,255,0.1);
+    }
+    .correlation-table th {
+        background: rgba(255,255,255,0.05);
+    }
+</style>
+{% endblock %}

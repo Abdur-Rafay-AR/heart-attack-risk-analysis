@@ -177,6 +177,96 @@ def dataset_page():
 
     return render_template("dataset.html", plots=plot_names)
 
+@app.route("/analysis")
+def analysis_page():
+    try:
+        df = get_data()
+        
+        # Basic Statistics using NumPy
+        # We'll analyze Age, Cholesterol, Heart Rate, and BMI
+        columns_to_analyze = {
+            'Age': df['Age'].values,
+            'Cholesterol': df['Cholesterol'].values,
+            'Heart Rate': df['Heart Rate'].values,
+            'BMI': df['BMI'].values
+        }
+        
+        basic_stats = {}
+        for name, data in columns_to_analyze.items():
+            q25, q75 = np.percentile(data, [25, 75])
+            basic_stats[name] = {
+                'mean': np.mean(data),
+                'median': np.median(data),
+                'std': np.std(data),
+                'min': np.min(data),
+                'max': np.max(data),
+                'q25': q25,
+                'q75': q75
+            }
+            
+        # Correlation Analysis using NumPy
+        # Extracting arrays
+        chol = df['Cholesterol'].values
+        hr = df['Heart Rate'].values
+        bmi = df['BMI'].values
+        
+        # Calculate correlations
+        correlations = {
+            'chol_hr': np.corrcoef(chol, hr)[0, 1],
+            'chol_bmi': np.corrcoef(chol, bmi)[0, 1],
+            'hr_bmi': np.corrcoef(hr, bmi)[0, 1]
+        }
+
+        # Advanced: Blood Pressure Analysis (NumPy)
+        # Split string column and convert to numpy array
+        bp_series = df['Blood Pressure'].str.split('/')
+        systolic = np.array([float(x[0]) for x in bp_series])
+        diastolic = np.array([float(x[1]) for x in bp_series])
+        
+        bp_stats = {
+            'systolic_mean': np.mean(systolic),
+            'systolic_max': np.max(systolic),
+            'diastolic_mean': np.mean(diastolic),
+            'diastolic_max': np.max(diastolic),
+            'pulse_pressure_mean': np.mean(systolic - diastolic) # Pulse pressure = Sys - Dia
+        }
+
+        # Advanced: Outlier Detection using IQR (NumPy)
+        outlier_stats = {}
+        for name, data in {'Cholesterol': chol, 'BMI': bmi, 'Heart Rate': hr}.items():
+            q1, q3 = np.percentile(data, [25, 75])
+            iqr = q3 - q1
+            lower_bound = q1 - 1.5 * iqr
+            upper_bound = q3 + 1.5 * iqr
+            # Boolean indexing to find outliers
+            outliers_count = np.sum((data < lower_bound) | (data > upper_bound))
+            outlier_stats[name] = {
+                'count': int(outliers_count),
+                'lower': lower_bound,
+                'upper': upper_bound
+            }
+        
+        # Risk Group Analysis using Boolean Indexing
+        risk_mask = df['Heart Attack Risk'].values == 1
+        no_risk_mask = df['Heart Attack Risk'].values == 0
+        
+        risk_stats = {
+            'risk_age_mean': np.mean(df['Age'].values[risk_mask]),
+            'no_risk_age_mean': np.mean(df['Age'].values[no_risk_mask]),
+            'risk_chol_mean': np.mean(df['Cholesterol'].values[risk_mask]),
+            'no_risk_chol_mean': np.mean(df['Cholesterol'].values[no_risk_mask])
+        }
+        
+        return render_template("analysis.html", 
+                             basic_stats=basic_stats, 
+                             correlations=correlations, 
+                             risk_stats=risk_stats,
+                             bp_stats=bp_stats,
+                             outlier_stats=outlier_stats)
+                             
+    except Exception as e:
+        return f"Error performing analysis: {str(e)}", 500
+
 @app.route("/plot/<plotname>")
 def plot(plotname):
     try:
