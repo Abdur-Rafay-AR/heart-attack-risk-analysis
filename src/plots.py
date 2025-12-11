@@ -1,5 +1,3 @@
-#file for plotting using matplotlib
-
 import matplotlib.pyplot as plt
 
 class LinePlotter:
