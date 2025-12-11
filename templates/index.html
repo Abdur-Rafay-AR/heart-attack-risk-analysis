@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block title %}Home - Heart Attack Risk Analysis{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="hero-section">
+        <h1><i class="fas fa-heartbeat"></i> Heart Attack Risk Analysis</h1>
+        <p>Advanced Data Analytics & Visualization Platform</p>
+    </div>
+
+    {% if summary.error %}
+    <div class="alert alert-error">
+        <i class="fas fa-exclamation-circle"></i>
+        <span>{{ summary.error }}</span>
+    </div>
+    {% else %}
+    <div class="stats-grid">
+        <div class="stat-box glass-panel">
+            <span class="stat-number">{{ summary.rows }}</span>
+            <span class="stat-label">Total Records</span>
+        </div>
+        <div class="stat-box glass-panel">
+            <span class="stat-number">{{ summary.cols }}</span>
+            <span class="stat-label">Data Features</span>
+        </div>
+        <div class="stat-box glass-panel">
+            <span class="stat-number">{{ summary.columns|length }}</span>
+            <span class="stat-label">Attributes</span>
+        </div>
+        <div class="stat-box glass-panel">
+            <span class="stat-number"><i class="fas fa-check-circle"></i></span>
+            <span class="stat-label">Data Loaded</span>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="cards-grid">
+        <div class="card glass-panel feature-card">
+            <div class="card-icon">
+                <i class="fas fa-chart-line"></i>
+            </div>
+            <h3>Dataset Visualizations</h3>
+            <p>Explore interactive charts and graphs analyzing heart attack risk factors across multiple dimensions.</p>
+            <a href="{{ url_for('dataset_page') }}" class="btn btn-primary"><i class="fas fa-chart-bar"></i> View Visualizations</a>
+        </div>
+
+        <div class="card glass-panel feature-card">
+            <div class="card-icon">
+                <i class="fas fa-heartbeat"></i>
+            </div>
+            <h3>Health Analytics</h3>
+            <p>Deep dive into medical attributes including cholesterol levels, blood pressure, and heart rate patterns.</p>
+            <a href="{{ url_for('analysis_page') }}" class="btn btn-primary"><i class="fas fa-microscope"></i> Analyze Data</a>
+        </div>
+        
+        <div class="card glass-panel feature-card">
+            <div class="card-icon">
+                <i class="fas fa-info-circle"></i>
+            </div>
+            <h3>About the Project</h3>
+            <p>Learn about our methodology, technology stack, and the dataset powering these insights.</p>
+            <a href="{{ url_for('about') }}" class="btn btn-primary"><i class="fas fa-book-open"></i> Learn More</a>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2 class="section-title">Dataset Features</h2>
+        <div class="table-container glass-panel">
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Column Name</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for col in summary.columns %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td><strong>{{ col }}</strong></td>
+                        <td><span class="badge">Active</span></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    {% if summary.sample_data %}
+    <div class="section">
+        <h2 class="section-title">Sample Data Preview</h2>
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle"></i>
+            <span>Showing first 5 records from the dataset</span>
+        </div>
+        <div class="table-container glass-panel">
+            <table>
+                <thead>
+                    <tr>
+                        {% for col in summary.columns %}
+                        <th>{{ col }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in summary.sample_data %}
+                    <tr>
+                        {% for col in summary.columns %}
+                        <td>{{ row[col] }}</td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+
+</div>
+{% endblock %}

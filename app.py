@@ -1,68 +1,470 @@
-from flask import Flask, render_template, send_file, abort
-from operations.loader import load_dataset
-from operations import plots
+from flask import Flask, render_template, send_file, abort, url_for
+import os
+import io
+import matplotlib
+matplotlib.use('Agg') # Set backend before importing pyplot
+import matplotlib.pyplot as plt
+import pandas as pd
+import seaborn as sns
+import numpy as np
+from src.ali import PandasProcessor
 
 app = Flask(__name__)
+
+# Configuration
+DATA_PATH = os.path.join('data', 'dataset.csv')
+STATIC_PLOTS_DIR = os.path.join('static', 'plots')
+os.makedirs(STATIC_PLOTS_DIR, exist_ok=True)
+
+def get_data():
+    # Using the class from src/ali.py
+    processor = PandasProcessor(DATA_PATH)
+    return processor.df
+
+def generate_insights(df):
+    """Generate insights for each plot using numpy and pandas"""
+    insights = {}
+    
+    try:
+        # 1. Age Distribution Insights
+        risk_age = df[df['Heart Attack Risk'] == 1]['Age']
+        no_risk_age = df[df['Heart Attack Risk'] == 0]['Age']
+        
+        avg_risk_age = np.mean(risk_age)
+        avg_no_risk_age = np.mean(no_risk_age)
+        
+        insights['age_distribution'] = {
+            "title": "Age & Risk Correlation",
+            "stats": [
+                f"Average age of at-risk patients: <strong>{avg_risk_age:.1f} years</strong>",
+                f"Average age of healthy patients: <strong>{avg_no_risk_age:.1f} years</strong>",
+                f"Age difference: <strong>{abs(avg_risk_age - avg_no_risk_age):.1f} years</strong>"
+            ],
+            "description": f"Patients at risk are on average {'older' if avg_risk_age > avg_no_risk_age else 'younger'} than those not at risk. The data suggests age is a significant factor."
+        }
+
+        # 2. Gender Risk Insights
+        gender_risk = df.groupby('Sex')['Heart Attack Risk'].mean() * 100
+        male_risk = gender_risk.get('Male', 0)
+        female_risk = gender_risk.get('Female', 0)
+        
+        insights['risk_by_gender'] = {
+            "title": "Gender Disparity",
+            "stats": [
+                f"Male Risk Rate: <strong>{male_risk:.1f}%</strong>",
+                f"Female Risk Rate: <strong>{female_risk:.1f}%</strong>"
+            ],
+            "description": f"{'Males' if male_risk > female_risk else 'Females'} show a higher susceptibility to heart attack risk in this dataset."
+        }
+
+        # 3. Cholesterol vs BP Insights
+        df['Systolic_BP'] = df['Blood Pressure'].str.split('/').str[0].astype(float)
+        correlation = np.corrcoef(df['Cholesterol'], df['Systolic_BP'])[0, 1]
+        avg_chol_risk = np.mean(df[df['Heart Attack Risk'] == 1]['Cholesterol'])
+        
+        insights['cholesterol_bp'] = {
+            "title": "Vital Signs Correlation",
+            "stats": [
+                f"Cholesterol-BP Correlation: <strong>{correlation:.2f}</strong>",
+                f"Avg Cholesterol (At Risk): <strong>{avg_chol_risk:.1f} mg/dL</strong>"
+            ],
+            "description": "The scatter plot reveals the relationship between cholesterol levels and blood pressure. Higher values in both metrics often correlate with increased risk."
+        }
+
+        # 4. BMI Analysis
+        avg_bmi_risk = np.mean(df[df['Heart Attack Risk'] == 1]['BMI'])
+        avg_bmi_healthy = np.mean(df[df['Heart Attack Risk'] == 0]['BMI'])
+        
+        insights['bmi_analysis'] = {
+            "title": "BMI Impact",
+            "stats": [
+                f"Avg BMI (At Risk): <strong>{avg_bmi_risk:.1f}</strong>",
+                f"Avg BMI (Healthy): <strong>{avg_bmi_healthy:.1f}</strong>"
+            ],
+            "description": "Body Mass Index (BMI) distribution shows distinct patterns between risk groups, highlighting obesity as a potential contributor."
+        }
+
+        # 5. Lifestyle Factors
+        factors = ['Smoking', 'Diabetes', 'Obesity', 'Alcohol Consumption']
+        risk_factors = df[df['Heart Attack Risk'] == 1][factors].mean() * 100
+        top_factor = risk_factors.idxmax()
+        
+        insights['lifestyle_factors'] = {
+            "title": "Lifestyle Contributors",
+            "stats": [f"{factor}: <strong>{val:.1f}%</strong> prevalence in at-risk group" for factor, val in risk_factors.items()],
+            "description": f"<strong>{top_factor}</strong> appears to be the most prevalent lifestyle factor among patients at risk of heart attack."
+        }
+
+        # 6. Age Groups
+        df['Age_Group'] = pd.cut(df['Age'], bins=[0, 30, 45, 60, 75, 100], labels=['<30', '30-45', '45-60', '60-75', '75+'])
+        age_risk_rates = df.groupby('Age_Group')['Heart Attack Risk'].mean() * 100
+        highest_risk_group = age_risk_rates.idxmax()
+        
+        insights['age_groups'] = {
+            "title": "Age Group Vulnerability",
+            "stats": [
+                f"Highest Risk Group: <strong>{highest_risk_group}</strong>",
+                f"Risk Rate in {highest_risk_group}: <strong>{age_risk_rates.max():.1f}%</strong>"
+            ],
+            "description": "Risk levels vary significantly across different age brackets, with specific groups showing markedly higher vulnerability."
+        }
+
+        # 7. Overall Distribution
+        total_risk_rate = df['Heart Attack Risk'].mean() * 100
+        
+        insights['risk_distribution_pie'] = {
+            "title": "Population Overview",
+            "stats": [
+                f"Overall Population at Risk: <strong>{total_risk_rate:.1f}%</strong>",
+                f"Total Patients: <strong>{len(df)}</strong>"
+            ],
+            "description": "This chart provides a high-level view of the dataset's balance between at-risk and healthy individuals."
+        }
+
+    except Exception as e:
+        print(f"Error generating insights: {e}")
+        # Fallback for all keys if something fails
+        for key in ['age_distribution', 'risk_by_gender', 'cholesterol_bp', 'bmi_analysis', 'lifestyle_factors', 'age_groups', 'risk_distribution_pie']:
+            if key not in insights:
+                insights[key] = {
+                    "title": "Analysis Unavailable",
+                    "stats": [],
+                    "description": "Could not generate insights for this visualization."
+                }
+                
+    return insights
 
 @app.route("/")
 def index():
     summary = {}
     try:
-        df = load_dataset()
+        df = get_data()
         summary = {
             "rows": len(df),
             "cols": len(df.columns),
             "columns": df.columns.tolist(),
+            "sample_data": df.head(5).to_dict(orient='records')
         }
     except Exception as e:
-        summary = {"error": str(e)}
+        summary = {"error": f"Error loading data: {str(e)}"}
     return render_template("index.html", summary=summary)
 
 @app.route("/dataset")
 def dataset_page():
     try:
-        df = load_dataset()
+        df = get_data()
     except:
         abort(404)
 
+    # Define available plots
     plot_names = [
-        "histogram",
-        "target_by_sex",
-        "corr_heatmap",
-        "scatter_fit",
-        "boxplot",
-        "density"
+        {"id": "age_distribution", "name": "Age Distribution by Risk"},
+        {"id": "risk_by_gender", "name": "Heart Attack Risk by Gender"},
+        {"id": "cholesterol_bp", "name": "Cholesterol vs Blood Pressure"},
+        {"id": "bmi_analysis", "name": "BMI Distribution by Risk"},
+        {"id": "lifestyle_factors", "name": "Lifestyle Risk Factors"},
+        {"id": "age_groups", "name": "Risk Distribution Across Age Groups"},
+        {"id": "risk_distribution_pie", "name": "Overall Risk Distribution"},
     ]
+
+    # Generate insights
+    insights = generate_insights(df)
+    
+    # Attach insights to plot objects
+    for plot in plot_names:
+        if plot['id'] in insights:
+            plot['insight'] = insights[plot['id']]
 
     return render_template("dataset.html", plots=plot_names)
 
+@app.route("/analysis")
+def analysis_page():
+    try:
+        df = get_data()
+        
+        # Basic Statistics using NumPy
+        # We'll analyze Age, Cholesterol, Heart Rate, and BMI
+        columns_to_analyze = {
+            'Age': df['Age'].values,
+            'Cholesterol': df['Cholesterol'].values,
+            'Heart Rate': df['Heart Rate'].values,
+            'BMI': df['BMI'].values
+        }
+        
+        basic_stats = {}
+        for name, data in columns_to_analyze.items():
+            q25, q75 = np.percentile(data, [25, 75])
+            basic_stats[name] = {
+                'mean': np.mean(data),
+                'median': np.median(data),
+                'std': np.std(data),
+                'min': np.min(data),
+                'max': np.max(data),
+                'q25': q25,
+                'q75': q75
+            }
+            
+        # Correlation Analysis using NumPy
+        # Extracting arrays
+        chol = df['Cholesterol'].values
+        hr = df['Heart Rate'].values
+        bmi = df['BMI'].values
+        
+        # Calculate correlations
+        correlations = {
+            'chol_hr': np.corrcoef(chol, hr)[0, 1],
+            'chol_bmi': np.corrcoef(chol, bmi)[0, 1],
+            'hr_bmi': np.corrcoef(hr, bmi)[0, 1]
+        }
+
+        # Advanced: Blood Pressure Analysis (NumPy)
+        # Split string column and convert to numpy array
+        bp_series = df['Blood Pressure'].str.split('/')
+        systolic = np.array([float(x[0]) for x in bp_series])
+        diastolic = np.array([float(x[1]) for x in bp_series])
+        
+        bp_stats = {
+            'systolic_mean': np.mean(systolic),
+            'systolic_max': np.max(systolic),
+            'diastolic_mean': np.mean(diastolic),
+            'diastolic_max': np.max(diastolic),
+            'pulse_pressure_mean': np.mean(systolic - diastolic) # Pulse pressure = Sys - Dia
+        }
+
+        # Advanced: Outlier Detection using IQR (NumPy)
+        outlier_stats = {}
+        for name, data in {'Cholesterol': chol, 'BMI': bmi, 'Heart Rate': hr}.items():
+            q1, q3 = np.percentile(data, [25, 75])
+            iqr = q3 - q1
+            lower_bound = q1 - 1.5 * iqr
+            upper_bound = q3 + 1.5 * iqr
+            # Boolean indexing to find outliers
+            outliers_count = np.sum((data < lower_bound) | (data > upper_bound))
+            outlier_stats[name] = {
+                'count': int(outliers_count),
+                'lower': lower_bound,
+                'upper': upper_bound
+            }
+        
+        # Risk Group Analysis using Boolean Indexing
+        risk_mask = df['Heart Attack Risk'].values == 1
+        no_risk_mask = df['Heart Attack Risk'].values == 0
+        
+        risk_stats = {
+            'risk_age_mean': np.mean(df['Age'].values[risk_mask]),
+            'no_risk_age_mean': np.mean(df['Age'].values[no_risk_mask]),
+            'risk_chol_mean': np.mean(df['Cholesterol'].values[risk_mask]),
+            'no_risk_chol_mean': np.mean(df['Cholesterol'].values[no_risk_mask])
+        }
+        
+        return render_template("analysis.html", 
+                             basic_stats=basic_stats, 
+                             correlations=correlations, 
+                             risk_stats=risk_stats,
+                             bp_stats=bp_stats,
+                             outlier_stats=outlier_stats)
+                             
+    except Exception as e:
+        return f"Error performing analysis: {str(e)}", 500
+
 @app.route("/plot/<plotname>")
 def plot(plotname):
-    df = load_dataset()
+    try:
+        df = get_data()
+        
+        # Custom color palette
+        colors = ['#5A0E24', '#76153C', '#BF124D', '#800000']
+        risk_colors = [colors[0], colors[2]]  # Low risk, High risk
+        
+        # Set dark theme for plots
+        plt.style.use('dark_background')
+        sns.set_palette(sns.color_palette(colors))
+        
+        # Create figure based on plot type
+        figsize = (12, 7)
+        if plotname in ["cholesterol_bp", "bmi_analysis", "lifestyle_factors", "risk_distribution_pie"]:
+            figsize = (8, 5)
+            
+        fig, ax = plt.subplots(figsize=figsize, facecolor='#1a1a1a')
+        
+        # Generate specific plots
+        if plotname == "age_distribution":
+            # Age distribution with risk overlay
+            sns.histplot(data=df, x='Age', hue='Heart Attack Risk', 
+                        bins=30, kde=True, palette=risk_colors, alpha=0.6, ax=ax)
+            ax.set_title("Age Distribution by Heart Attack Risk", fontsize=18, fontweight='bold', color='white', pad=20)
+            ax.set_xlabel('Age (years)', fontsize=13, color='#e0e0e0')
+            ax.set_ylabel('Frequency', fontsize=13, color='#e0e0e0')
+            ax.legend(title='Risk Level', labels=['No Risk', 'At Risk'], fontsize=10)
+            
+        elif plotname == "risk_by_gender":
+            # Stacked bar chart for gender and risk
+            risk_gender = df.groupby(['Sex', 'Heart Attack Risk']).size().unstack(fill_value=0)
+            risk_gender.plot(kind='bar', stacked=False, color=risk_colors, ax=ax, width=0.6)
+            ax.set_title("Heart Attack Risk by Gender", fontsize=18, fontweight='bold', color='white', pad=20)
+            ax.set_xlabel('Gender', fontsize=13, color='#e0e0e0')
+            ax.set_ylabel('Number of Patients', fontsize=13, color='#e0e0e0')
+            ax.legend(title='Risk Status', labels=['No Risk', 'At Risk'], fontsize=10)
+            ax.set_xticklabels(ax.get_xticklabels(), rotation=0)
+            
+        elif plotname == "cholesterol_bp":
+            # Extract systolic BP (first number)
+            df['Systolic_BP'] = df['Blood Pressure'].str.split('/').str[0].astype(float)
+            # Scatter plot with size based on age
+            scatter = ax.scatter(df['Cholesterol'], df['Systolic_BP'], 
+                               c=df['Heart Attack Risk'], s=df['Age']*2, 
+                               alpha=0.6, cmap='RdYlBu_r', edgecolors='white', linewidth=0.5)
+            ax.set_title("Cholesterol vs Blood Pressure (size = age)", fontsize=18, fontweight='bold', color='white', pad=20)
+            ax.set_xlabel('Cholesterol (mg/dL)', fontsize=13, color='#e0e0e0')
+            ax.set_ylabel('Systolic Blood Pressure (mmHg)', fontsize=13, color='#e0e0e0')
+            # Set axis limits based on data range with padding
+            ax.set_xlim(df['Cholesterol'].min() - 20, df['Cholesterol'].max() + 20)
+            ax.set_ylim(df['Systolic_BP'].min() - 10, df['Systolic_BP'].max() + 10)
+            cbar = plt.colorbar(scatter, ax=ax)
+            cbar.set_label('Heart Attack Risk', fontsize=11, color='#e0e0e0')
+            cbar.ax.yaxis.set_tick_params(color='#e0e0e0')
+            plt.setp(plt.getp(cbar.ax.axes, 'yticklabels'), color='#e0e0e0')
+            
+        elif plotname == "bmi_analysis":
+            # Violin plot for BMI distribution
+            sns.violinplot(data=df, x='Heart Attack Risk', y='BMI', 
+                          palette=risk_colors, ax=ax, inner='quartile')
+            ax.set_title("BMI Distribution by Risk Status", fontsize=18, fontweight='bold', color='white', pad=20)
+            ax.set_xlabel('Heart Attack Risk', fontsize=13, color='#e0e0e0')
+            ax.set_ylabel('BMI (Body Mass Index)', fontsize=13, color='#e0e0e0')
+            ax.set_xticklabels(['No Risk', 'At Risk'])
+            # Add mean lines
+            means = df.groupby('Heart Attack Risk')['BMI'].mean()
+            for i, mean in enumerate(means):
+                ax.hlines(mean, i-0.4, i+0.4, colors='yellow', linestyle='--', linewidth=2, label=f'Mean: {mean:.1f}' if i==0 else '')
+            
+        elif plotname == "lifestyle_factors":
+            # Multiple lifestyle factors comparison
+            lifestyle_data = df[['Diabetes', 'Smoking', 'Obesity', 'Alcohol Consumption', 'Heart Attack Risk']]
+            risk_lifestyle = lifestyle_data.groupby('Heart Attack Risk')[['Diabetes', 'Smoking', 'Obesity', 'Alcohol Consumption']].mean()
+            risk_lifestyle = risk_lifestyle.T
+            risk_lifestyle.plot(kind='barh', color=risk_colors, ax=ax, width=0.7)
+            ax.set_title("Lifestyle Risk Factors Comparison", fontsize=18, fontweight='bold', color='white', pad=20)
+            ax.set_xlabel('Proportion of Patients', fontsize=13, color='#e0e0e0')
+            ax.set_ylabel('Risk Factor', fontsize=13, color='#e0e0e0')
+            ax.legend(title='Risk Status', labels=['No Risk', 'At Risk'], fontsize=10)
+            ax.set_xlim(0, 1)
+            
+        elif plotname == "age_groups":
+            # Age groups risk distribution
+            df['Age_Group'] = pd.cut(df['Age'], bins=[0, 30, 45, 60, 75, 100], 
+                                     labels=['<30', '30-45', '45-60', '60-75', '75+'])
+            age_risk = df.groupby(['Age_Group', 'Heart Attack Risk']).size().unstack(fill_value=0)
+            age_risk_pct = age_risk.div(age_risk.sum(axis=1), axis=0) * 100
+            age_risk_pct.plot(kind='bar', stacked=True, color=risk_colors, ax=ax, width=0.7)
+            ax.set_title("Risk Distribution Across Age Groups", fontsize=18, fontweight='bold', color='white', pad=20)
+            ax.set_xlabel('Age Group', fontsize=13, color='#e0e0e0')
+            ax.set_ylabel('Percentage (%)', fontsize=13, color='#e0e0e0')
+            ax.legend(title='Risk Status', labels=['No Risk', 'At Risk'], fontsize=10)
+            ax.set_xticklabels(ax.get_xticklabels(), rotation=45, ha='right')
+            ax.set_ylim(0, 100)
+            
+        elif plotname == "risk_distribution_pie":
+            # Pie chart for overall risk distribution
+            risk_counts = df['Heart Attack Risk'].value_counts().sort_index()
+            
+            # Dynamic configuration based on available data
+            labels = []
+            pie_colors = []
+            explode = []
+            
+            for val in risk_counts.index:
+                if val == 0:
+                    labels.append('No Risk')
+                    pie_colors.append(colors[0])
+                else:
+                    labels.append('At Risk')
+                    pie_colors.append(colors[2])
+                explode.append(0.05)
 
-    plot_functions = {
-        "histogram": plots.plot_histogram,
-        "target_by_sex": plots.plot_target_by_sex,
-        "corr_heatmap": plots.plot_corr_heatmap,
-        "scatter_fit": plots.plot_scatter_with_fit,
-        "boxplot": plots.plot_boxplot,
-        "density": plots.plot_density,
-    }
-
-    if plotname not in plot_functions:
-        abort(404)
-
-    buf = plot_functions[plotname](df)
-    return send_file(buf, mimetype="image/png")
+            # Create pie chart with improved text positioning
+            wedges, texts, autotexts = ax.pie(
+                risk_counts, 
+                labels=labels, 
+                autopct='%1.1f%%', 
+                startangle=90, 
+                colors=pie_colors, 
+                explode=explode,
+                textprops={'fontsize': 14, 'color': 'white', 'fontweight': 'bold'},
+                pctdistance=0.80  # Move percentage labels closer to edge
+            )
+            
+            ax.set_title("Overall Heart Attack Risk Distribution", 
+                        fontsize=18, fontweight='bold', color='white', pad=20)
+            
+            # Add count labels with better positioning
+            for i, (wedge, count) in enumerate(zip(wedges, risk_counts)):
+                angle = (wedge.theta2 - wedge.theta1) / 2. + wedge.theta1
+                x = wedge.r * 0.5 * np.cos(np.radians(angle))  # Position at 50% radius
+                y = wedge.r * 0.5 * np.sin(np.radians(angle))
+                ax.text(x, y, f'n={count}', 
+                        ha='center', va='center', 
+                        fontsize=12, color='white', 
+                        weight='bold',
+                        bbox=dict(boxstyle='round,pad=0.3', facecolor='black', alpha=0.3, edgecolor='none'))
+            
+            # Style the percentage text for better readability
+            for autotext in autotexts:
+                autotext.set_color('white')
+                autotext.set_fontsize(13)
+                autotext.set_weight('bold')
+            
+            # Style the label text
+            for text in texts:
+                text.set_color('white')
+                text.set_fontsize(15)
+                text.set_weight('bold')
+            
+            # Ensure aspect ratio is equal so pie is drawn as a circle
+            ax.axis('equal')
+            
+        else:
+            plt.close(fig)
+            return abort(404)
+        
+        # Apply consistent dark theme styling (skip for pie charts)
+        if plotname != "risk_distribution_pie":
+            ax.set_facecolor('#0a0a0a')
+            ax.tick_params(colors='#e0e0e0', labelsize=10)
+            ax.spines['bottom'].set_color('#e0e0e0')
+            ax.spines['left'].set_color('#e0e0e0')
+            ax.spines['top'].set_visible(False)
+            ax.spines['right'].set_visible(False)
+            ax.grid(alpha=0.15, linestyle='--', linewidth=0.5)
+        
+        # Adjust layout
+        if plotname != "risk_distribution_pie":
+            plt.tight_layout()
+        
+        # Save to file in static/plots directory
+        filename = f"{plotname}.png"
+        filepath = os.path.join(STATIC_PLOTS_DIR, filename)
+        fig.savefig(filepath, format='png', facecolor='#1a1a1a', edgecolor='none', 
+                   dpi=120, bbox_inches='tight', metadata={})
+        
+        # Also save to memory buffer for immediate serving
+        img_bytes = io.BytesIO()
+        fig.savefig(img_bytes, format='png', facecolor='#1a1a1a', edgecolor='none', 
+                   dpi=120, bbox_inches='tight', metadata={})
+        img_bytes.seek(0)
+        
+        plt.close(fig)
+        
+        return send_file(img_bytes, mimetype='image/png', as_attachment=False)
+        
+    except Exception as e:
+        if 'fig' in locals():
+            plt.close(fig)
+        return f"Error generating plot: {str(e)}", 500
 
 @app.route("/about")
 def about():
     return render_template("about.html")
-
-@app.route("/contact")
-def contact():
-    return render_template("contact.html")
-
 
 if __name__ == "__main__":
     app.run(debug=True)
