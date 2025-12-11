@@ -1,5 +1,6 @@
 # Starting work with matplotlib
 import matplotlib.pyplot as plt
+import pandas as pd
 
 class BarChart:
     def draw(self, x, y):
@@ -35,4 +36,12 @@ class Heatmap:
         plt.imshow(data, aspect="auto")
         plt.colorbar()
         plt.title("Correlation Heatmap")
-        plt.show()        
+        plt.show()  
+
+class AreaPlot:
+    def draw(self, y):
+        plt.fill_between(range(len(y)), y)
+        plt.title("Area Plot")
+        plt.xlabel("Index")
+        plt.ylabel("Values")
+        plt.show()
