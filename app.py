@@ -6,6 +6,7 @@ matplotlib.use('Agg') # Set backend before importing pyplot
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
+import numpy as np
 from src.ali import PandasProcessor
 
 app = Flask(__name__)
@@ -70,7 +71,7 @@ def plot(plotname):
         
         # Create figure based on plot type
         figsize = (12, 7)
-        if plotname in ["cholesterol_bp", "bmi_analysis", "lifestyle_factors"]:
+        if plotname in ["cholesterol_bp", "bmi_analysis", "lifestyle_factors", "risk_distribution_pie"]:
             figsize = (8, 5)
             
         fig, ax = plt.subplots(figsize=figsize, facecolor='#1a1a1a')
@@ -154,36 +155,80 @@ def plot(plotname):
             
         elif plotname == "risk_distribution_pie":
             # Pie chart for overall risk distribution
-            risk_counts = df['Heart Attack Risk'].value_counts()
-            colors_pie = [colors[0], colors[2]]
-            explode = (0.05, 0.05)
-            wedges, texts, autotexts = ax.pie(risk_counts, labels=['No Risk', 'At Risk'], 
-                                               autopct='%1.1f%%', startangle=90, 
-                                               colors=colors_pie, explode=explode,
-                                               textprops={'fontsize': 14, 'color': 'white', 'fontweight': 'bold'})
-            ax.set_title("Overall Heart Attack Risk Distribution", fontsize=18, fontweight='bold', color='white', pad=20)
-            # Add count labels
+            risk_counts = df['Heart Attack Risk'].value_counts().sort_index()
+            
+            # Dynamic configuration based on available data
+            labels = []
+            pie_colors = []
+            explode = []
+            
+            for val in risk_counts.index:
+                if val == 0:
+                    labels.append('No Risk')
+                    pie_colors.append(colors[0])
+                else:
+                    labels.append('At Risk')
+                    pie_colors.append(colors[2])
+                explode.append(0.05)
+
+            # Create pie chart with improved text positioning
+            wedges, texts, autotexts = ax.pie(
+                risk_counts, 
+                labels=labels, 
+                autopct='%1.1f%%', 
+                startangle=90, 
+                colors=pie_colors, 
+                explode=explode,
+                textprops={'fontsize': 14, 'color': 'white', 'fontweight': 'bold'},
+                pctdistance=0.80  # Move percentage labels closer to edge
+            )
+            
+            ax.set_title("Overall Heart Attack Risk Distribution", 
+                        fontsize=18, fontweight='bold', color='white', pad=20)
+            
+            # Add count labels with better positioning
             for i, (wedge, count) in enumerate(zip(wedges, risk_counts)):
                 angle = (wedge.theta2 - wedge.theta1) / 2. + wedge.theta1
-                x = wedge.r * 0.7 * plt.cos(plt.radians(angle))
-                y = wedge.r * 0.7 * plt.sin(plt.radians(angle))
-                ax.text(x, y, f'n={count}', ha='center', va='center', fontsize=11, color='white', weight='bold')
+                x = wedge.r * 0.5 * np.cos(np.radians(angle))  # Position at 50% radius
+                y = wedge.r * 0.5 * np.sin(np.radians(angle))
+                ax.text(x, y, f'n={count}', 
+                        ha='center', va='center', 
+                        fontsize=12, color='white', 
+                        weight='bold',
+                        bbox=dict(boxstyle='round,pad=0.3', facecolor='black', alpha=0.3, edgecolor='none'))
+            
+            # Style the percentage text for better readability
+            for autotext in autotexts:
+                autotext.set_color('white')
+                autotext.set_fontsize(13)
+                autotext.set_weight('bold')
+            
+            # Style the label text
+            for text in texts:
+                text.set_color('white')
+                text.set_fontsize(15)
+                text.set_weight('bold')
+            
+            # Ensure aspect ratio is equal so pie is drawn as a circle
+            ax.axis('equal')
             
         else:
             plt.close(fig)
             return abort(404)
         
-        # Apply consistent dark theme styling
-        ax.set_facecolor('#0a0a0a')
-        ax.tick_params(colors='#e0e0e0', labelsize=10)
-        ax.spines['bottom'].set_color('#e0e0e0')
-        ax.spines['left'].set_color('#e0e0e0')
-        ax.spines['top'].set_visible(False)
-        ax.spines['right'].set_visible(False)
-        ax.grid(alpha=0.15, linestyle='--', linewidth=0.5)
+        # Apply consistent dark theme styling (skip for pie charts)
+        if plotname != "risk_distribution_pie":
+            ax.set_facecolor('#0a0a0a')
+            ax.tick_params(colors='#e0e0e0', labelsize=10)
+            ax.spines['bottom'].set_color('#e0e0e0')
+            ax.spines['left'].set_color('#e0e0e0')
+            ax.spines['top'].set_visible(False)
+            ax.spines['right'].set_visible(False)
+            ax.grid(alpha=0.15, linestyle='--', linewidth=0.5)
         
         # Adjust layout
-        plt.tight_layout()
+        if plotname != "risk_distribution_pie":
+            plt.tight_layout()
         
         # Save to file in static/plots directory
         filename = f"{plotname}.png"

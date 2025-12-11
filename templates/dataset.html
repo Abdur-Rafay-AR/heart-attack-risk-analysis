@@ -16,7 +16,7 @@
         </p>
     </div>
 
-    <div class="cards-grid">
+    <div class="viz-container">
         {% for plot in plots %}
         <div class="card glass-panel viz-card">
             <div class="card-header">
@@ -33,7 +33,7 @@
                      class="plot-image"
                      loading="lazy"
                      onload="this.previousElementSibling.style.display='none'; this.style.opacity='1';"
-                     onerror="var wrapper=this.parentElement; wrapper.innerHTML='<div class=\"plot-error\"><i class=\"fas fa-exclamation-triangle\"></i></div>
+                     onerror="handlePlotError(this)">
             </div>
         </div>
         {% endfor %}
@@ -44,9 +44,30 @@
     </div>
 </div>
 
+<script>
+    function handlePlotError(imgElement) {
+        const wrapper = imgElement.parentElement;
+        wrapper.innerHTML = '<div class="plot-error"><i class="fas fa-exclamation-triangle"></i><p>Failed to load visualization</p></div>';
+        wrapper.style.height = 'auto';
+    }
+</script>
+
 <style>
-    .cards-grid {
-        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    .viz-container {
+        display: flex;
+        flex-direction: column;
+        gap: 2.5rem;
+        width: 100%;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    .viz-card {
+        width: 100%;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
     }
 
     .plot-wrapper {
@@ -55,11 +76,13 @@
         border: 1px solid var(--glass-border);
         transition: all 0.3s;
         position: relative;
-        min-height: 300px;
+        min-height: 600px;
         background: #0a0a0a;
         display: flex;
         align-items: center;
         justify-content: center;
+        flex: 1;
+        padding: 20px;
     }
     
     .plot-loading {
@@ -81,21 +104,30 @@
         text-align: center;
         color: #ff4d4d;
         padding: 2rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        width: 100%;
     }
     
     .plot-error i {
-        font-size: 2rem;
-        margin-bottom: 0.5rem;
+        font-size: 3rem;
+        margin-bottom: 1rem;
     }
     
     .plot-image {
         width: 100%;
         height: auto;
+        max-height: 100%;
+        object-fit: contain;
         display: block;
         transition: transform 0.5s, opacity 0.3s;
         position: relative;
         z-index: 2;
         opacity: 0;
+        background: #0a0a0a;
     }
     
     .plot-image[src] {
@@ -109,6 +141,26 @@
     
     .viz-card:hover .plot-image {
         transform: scale(1.02);
+    }
+
+    .card-header {
+        padding: 1.5rem;
+        border-bottom: 1px solid var(--glass-border);
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+    }
+
+    .card-header h3 {
+        margin: 0;
+        font-size: 1.5rem;
+        font-weight: 600;
+    }
+
+    .card-header i {
+        font-size: 1.5rem;
+        color: var(--accent-color);
+        margin-right: 0.75rem;
     }
 </style>
 {% endblock %}
