@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block title %}About - Heart Attack Risk Analysis{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="hero-section">
+        <h1 class="glitch-text" data-text="About The Project">About The Project</h1>
+        <p class="subtitle">Unveiling the patterns in heart health data</p>
+    </div>
+
+    <div class="content-grid">
+        <div class="info-card glass-panel">
+            <div class="card-header">
+                <i class="fas fa-project-diagram"></i>
+                <h2>Project Overview</h2>
+            </div>
+            <p>
+                This Heart Attack Risk Analysis project leverages advanced data analytics to identify key indicators of heart disease. 
+                By visualizing complex medical data, we aim to provide accessible insights into risk factors such as age, cholesterol levels, and heart rate.
+            </p>
+        </div>
+
+        <div class="info-card glass-panel">
+            <div class="card-header">
+                <i class="fas fa-database"></i>
+                <h2>The Dataset</h2>
+            </div>
+            <p>
+                The dataset contains medical records of patients, including attributes like:
+            </p>
+            <ul class="feature-list">
+                <li><i class="fas fa-check"></i> Age & Sex</li>
+                <li><i class="fas fa-check"></i> Chest Pain Type (cp)</li>
+                <li><i class="fas fa-check"></i> Resting Blood Pressure (trtbps)</li>
+                <li><i class="fas fa-check"></i> Cholesterol (chol)</li>
+                <li><i class="fas fa-check"></i> Maximum Heart Rate (thalachh)</li>
+            </ul>
+        </div>
+
+        <div class="info-card glass-panel">
+            <div class="card-header">
+                <i class="fas fa-code"></i>
+                <h2>Tech Stack</h2>
+            </div>
+            <div class="tech-tags">
+                <span class="tag">Python</span>
+                <span class="tag">Flask</span>
+                <span class="tag">Pandas</span>
+                <span class="tag">Seaborn</span>
+                <span class="tag">Matplotlib</span>
+                <span class="tag">HTML5/CSS3</span>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
