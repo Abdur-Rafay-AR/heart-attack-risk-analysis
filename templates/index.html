@@ -4,8 +4,8 @@
 
 {% block content %}
 <div class="container">
-    <div class="hero">
-        <h1><i class="fas fa-heartbeat"></i> Heart Attack Risk Analysis</h1>
+    <div class="hero-section">
+        <h1 class="glitch-text" data-text="Heart Attack Risk Analysis"><i class="fas fa-heartbeat"></i> Heart Attack Risk Analysis</h1>
         <p>Advanced Data Analytics & Visualization Platform</p>
     </div>
 
@@ -16,19 +16,19 @@
     </div>
     {% else %}
     <div class="stats-grid">
-        <div class="stat-box">
+        <div class="stat-box glass-panel">
             <span class="stat-number">{{ summary.rows }}</span>
             <span class="stat-label">Total Records</span>
         </div>
-        <div class="stat-box">
+        <div class="stat-box glass-panel">
             <span class="stat-number">{{ summary.cols }}</span>
             <span class="stat-label">Data Features</span>
         </div>
-        <div class="stat-box">
+        <div class="stat-box glass-panel">
             <span class="stat-number">{{ summary.columns|length }}</span>
             <span class="stat-label">Attributes</span>
         </div>
-        <div class="stat-box">
+        <div class="stat-box glass-panel">
             <span class="stat-number"><i class="fas fa-check-circle"></i></span>
             <span class="stat-label">Data Loaded</span>
         </div>
@@ -36,7 +36,7 @@
     {% endif %}
 
     <div class="cards-grid">
-        <div class="card">
+        <div class="card glass-panel">
             <div class="card-icon">
                 <i class="fas fa-table"></i>
             </div>
@@ -45,18 +45,19 @@
             <a href="{{ url_for('dataset_page') }}" class="btn btn-primary">View Visualizations</a>
         </div>
 
-        <div class="card">
+        <div class="card glass-panel">
             <div class="card-icon">
                 <i class="fas fa-info-circle"></i>
             </div>
             <h3>About the Project</h3>
             <p>This project analyzes various health metrics to predict and visualize heart attack risks using advanced data processing.</p>
+            <a href="{{ url_for('about') }}" class="btn btn-primary">Learn More</a>
         </div>
     </div>
 
     <div class="section">
         <h2 class="section-title">Dataset Features</h2>
-        <div class="table-container">
+        <div class="table-container glass-panel">
             <table>
                 <thead>
                     <tr>
@@ -85,7 +86,7 @@
             <i class="fas fa-info-circle"></i>
             <span>Showing first 5 records from the dataset</span>
         </div>
-        <div class="table-container">
+        <div class="table-container glass-panel">
             <table>
                 <thead>
                     <tr>
@@ -106,7 +107,6 @@
             </table>
         </div>
     </div>
-    {% endif %}
     {% endif %}
 
 

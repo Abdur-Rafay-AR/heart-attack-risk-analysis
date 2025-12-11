@@ -4,27 +4,47 @@
 
 {% block content %}
 <div class="container">
-    <div class="hero" style="padding: 2rem;">
-        <h2>Dataset Visualizations</h2>
+    <div class="hero-section">
+        <h1 class="glitch-text" data-text="Dataset Visualizations">Dataset Visualizations</h1>
         <p>Select a visualization to analyze the heart attack risk factors</p>
     </div>
 
     <div class="cards-grid">
         {% for plot in plots %}
-        <div class="card">
-            <div class="card-icon">
-                <i class="fas fa-chart-bar"></i>
+        <div class="card glass-panel">
+            <div class="card-header">
+                <i class="fas fa-chart-pie"></i>
+                <h3>{{ plot.name }}</h3>
             </div>
-            <h3>{{ plot.name }}</h3>
-            <div class="plot-container">
-                <img src="{{ url_for('plot', plotname=plot.id) }}" alt="{{ plot.name }}" style="width: 100%; border-radius: 5px;">
+            <div class="plot-wrapper">
+                <img src="{{ url_for('plot', plotname=plot.id) }}" alt="{{ plot.name }}" class="plot-image">
             </div>
         </div>
         {% endfor %}
     </div>
     
-    <div style="margin-top: 2rem; text-align: center;">
-        <a href="{{ url_for('index') }}" class="btn btn-primary">Back to Home</a>
+    <div style="margin-top: 3rem; text-align: center;">
+        <a href="{{ url_for('index') }}" class="btn btn-primary"><i class="fas fa-home"></i> Back to Home</a>
     </div>
 </div>
+
+<style>
+    .plot-wrapper {
+        border-radius: 10px;
+        overflow: hidden;
+        border: 1px solid var(--glass-border);
+        transition: all 0.3s;
+    }
+    
+    .plot-image {
+        width: 100%;
+        height: auto;
+        display: block;
+        transition: transform 0.5s;
+    }
+    
+    .card:hover .plot-image {
+        transform: scale(1.05);
+    }
+</style>
 {% endblock %}

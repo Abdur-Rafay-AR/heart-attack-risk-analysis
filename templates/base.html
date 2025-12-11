@@ -9,10 +9,15 @@
 </head>
 <body>
     <nav class="navbar">
-        <div class="container">
+        <div class="container navbar-content">
             <a href="{{ url_for('index') }}" class="navbar-brand">
                 <i class="fas fa-heartbeat"></i> Heart Risk Analysis
             </a>
+            <ul class="nav-links">
+                <li><a href="{{ url_for('index') }}" class="nav-link"><i class="fas fa-home"></i> Home</a></li>
+                <li><a href="{{ url_for('dataset_page') }}" class="nav-link"><i class="fas fa-chart-bar"></i> Dataset</a></li>
+                <li><a href="{{ url_for('about') }}" class="nav-link"><i class="fas fa-info-circle"></i> About</a></li>
+            </ul>
         </div>
     </nav>
 
