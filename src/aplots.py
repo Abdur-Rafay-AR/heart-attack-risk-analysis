@@ -8,3 +8,12 @@ class BarChart:
         plt.xlabel("X")
         plt.ylabel("Y")
         plt.show()
+        
+import matplotlib.pyplot as plt
+
+class BoxPlot:
+    def draw(self, data):
+        plt.boxplot(data)
+        plt.title("Box Plot")
+        plt.ylabel("Values")
+        plt.show()
