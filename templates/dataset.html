@@ -1,0 +1,390 @@
+{% extends "base.html" %}
+
+{% block title %}Dataset Analysis - Heart Attack Risk{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="hero-section">
+        <h1>Dataset Visualizations</h1>
+        <p>Explore interactive data visualizations analyzing heart attack risk factors</p>
+    </div>
+
+    <div class="viz-description glass-panel" style="margin-bottom: 2rem; padding: 1.5rem; border-radius: 15px;">
+        <p style="text-align: center; color: var(--text-muted); margin: 0;">
+            <i class="fas fa-info-circle" style="color: var(--accent-color); margin-right: 0.5rem;"></i>
+            Click on any visualization to view detailed insights from our heart health dataset
+        </p>
+    </div>
+
+    <div class="viz-container">
+        {% for plot in plots %}
+        <div class="card glass-panel viz-card" onclick="showInsight('{{ plot.id }}')">
+            <div class="card-header">
+                <i class="fas fa-chart-pie"></i>
+                <h3>{{ plot.name }}</h3>
+                <span class="click-hint"><i class="fas fa-hand-pointer"></i> Click for insights</span>
+            </div>
+            <div class="plot-wrapper">
+                <div class="plot-loading">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <p>Loading visualization...</p>
+                </div>
+                <img src="{{ url_for('plot', plotname=plot.id) }}"
+                     alt="{{ plot.name }}"
+                     class="plot-image"
+                     loading="lazy"
+                     onload="this.previousElementSibling.style.display='none'; this.style.opacity='1';"
+                     onerror="handlePlotError(this)">
+            </div>
+            
+            <!-- Hidden Insight Data -->
+            <div id="insight-{{ plot.id }}" class="insight-data" style="display: none;">
+                <div class="insight-title">{{ plot.insight.title }}</div>
+                <div class="insight-description">{{ plot.insight.description | safe }}</div>
+                <ul class="insight-stats">
+                    {% for stat in plot.insight.stats %}
+                    <li>{{ stat | safe }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <!-- Insight Modal -->
+    <div id="insightModal" class="modal-overlay" onclick="closeModal(event)">
+        <div class="modal-content glass-panel">
+            <button class="close-modal" onclick="closeModal(event)">&times;</button>
+            <div class="modal-header">
+                <i class="fas fa-lightbulb"></i>
+                <h2 id="modalTitle">Insight Title</h2>
+            </div>
+            <div class="modal-body">
+                <p id="modalDescription" class="modal-desc"></p>
+                <div class="stats-container">
+                    <h3>Key Statistics</h3>
+                    <ul id="modalStats" class="stats-list"></ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div style="margin-top: 3rem; text-align: center;">
+        <a href="{{ url_for('index') }}" class="btn btn-primary"><i class="fas fa-home"></i> Back to Home</a>
+    </div>
+</div>
+
+<script>
+    function handlePlotError(imgElement) {
+        const wrapper = imgElement.parentElement;
+        wrapper.innerHTML = '<div class="plot-error"><i class="fas fa-exclamation-triangle"></i><p>Failed to load visualization</p></div>';
+        wrapper.style.height = 'auto';
+    }
+
+    function showInsight(plotId) {
+        const modal = document.getElementById('insightModal');
+        const dataDiv = document.getElementById('insight-' + plotId);
+        
+        if (!dataDiv) return;
+        
+        // Populate modal
+        document.getElementById('modalTitle').innerText = dataDiv.querySelector('.insight-title').innerText;
+        document.getElementById('modalDescription').innerHTML = dataDiv.querySelector('.insight-description').innerHTML;
+        
+        const statsList = document.getElementById('modalStats');
+        statsList.innerHTML = '';
+        const stats = dataDiv.querySelectorAll('.insight-stats li');
+        stats.forEach(stat => {
+            const li = document.createElement('li');
+            li.innerHTML = stat.innerHTML;
+            statsList.appendChild(li);
+        });
+        
+        // Show modal with animation
+        modal.style.display = 'flex';
+        setTimeout(() => {
+            modal.classList.add('active');
+        }, 10);
+        document.body.style.overflow = 'hidden'; // Prevent scrolling
+    }
+
+    function closeModal(event) {
+        if (event.target.id === 'insightModal' || event.target.classList.contains('close-modal') || event.target.closest('.close-modal')) {
+            const modal = document.getElementById('insightModal');
+            modal.classList.remove('active');
+            setTimeout(() => {
+                modal.style.display = 'none';
+            }, 300);
+            document.body.style.overflow = '';
+        }
+    }
+    
+    // Close on Escape key
+    document.addEventListener('keydown', function(event) {
+        if (event.key === "Escape") {
+            const modal = document.getElementById('insightModal');
+            if (modal.style.display === 'flex') {
+                closeModal({target: modal});
+            }
+        }
+    });
+</script>
+
+<style>
+    /* Modal Styles */
+    .modal-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        backdrop-filter: blur(5px);
+        z-index: 1000;
+        justify-content: center;
+        align-items: center;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+    
+    .modal-overlay.active {
+        opacity: 1;
+    }
+    
+    .modal-content {
+        width: 90%;
+        max-width: 600px;
+        background: linear-gradient(145deg, rgba(30, 30, 30, 0.95), rgba(20, 20, 20, 0.98));
+        border: 1px solid var(--accent-color);
+        box-shadow: 0 0 30px rgba(220, 53, 69, 0.2);
+        padding: 2rem;
+        position: relative;
+        transform: scale(0.9);
+        transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    
+    .modal-overlay.active .modal-content {
+        transform: scale(1);
+    }
+    
+    .close-modal {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        background: none;
+        border: none;
+        color: var(--text-muted);
+        font-size: 1.5rem;
+        cursor: pointer;
+        transition: color 0.2s;
+    }
+    
+    .close-modal:hover {
+        color: var(--accent-color);
+    }
+    
+    .modal-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        padding-bottom: 1rem;
+    }
+    
+    .modal-header i {
+        font-size: 1.8rem;
+        color: var(--accent-color);
+    }
+    
+    .modal-header h2 {
+        margin: 0;
+        color: var(--text-light);
+        font-size: 1.8rem;
+    }
+    
+    .modal-desc {
+        font-size: 1.1rem;
+        line-height: 1.6;
+        color: #e0e0e0;
+        margin-bottom: 2rem;
+    }
+    
+    .stats-container {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 10px;
+        padding: 1.5rem;
+    }
+    
+    .stats-container h3 {
+        margin-top: 0;
+        color: var(--accent-color);
+        font-size: 1.2rem;
+        margin-bottom: 1rem;
+    }
+    
+    .stats-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    
+    .stats-list li {
+        padding: 0.8rem 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        color: var(--text-muted);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .stats-list li:last-child {
+        border-bottom: none;
+    }
+    
+    .stats-list li strong {
+        color: var(--text-light);
+        font-size: 1.1rem;
+    }
+
+    .viz-container {
+        display: flex;
+        flex-direction: column;
+        gap: 2.5rem;
+        width: 100%;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    .viz-card {
+        width: 100%;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        cursor: pointer;
+        transition: transform 0.3s, box-shadow 0.3s;
+    }
+    
+    .viz-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+        border-color: var(--accent-color);
+    }
+    
+    .card-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding-right: 1rem;
+    }
+    
+    .click-hint {
+        font-size: 0.8rem;
+        color: var(--accent-color);
+        opacity: 0;
+        transition: opacity 0.3s;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .viz-card:hover .click-hint {
+        opacity: 1;
+    }
+
+    .plot-wrapper {
+        border-radius: 10px;
+        overflow: hidden;
+        border: 1px solid var(--glass-border);
+        transition: all 0.3s;
+        position: relative;
+        min-height: 600px;
+        background: #0a0a0a;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex: 1;
+        padding: 20px;
+    }
+    
+    .plot-loading {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        text-align: center;
+        color: var(--accent-color);
+        z-index: 1;
+    }
+    
+    .plot-loading i {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .plot-error {
+        text-align: center;
+        color: #ff4d4d;
+        padding: 2rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        width: 100%;
+    }
+    
+    .plot-error i {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+    }
+    
+    .plot-image {
+        width: 100%;
+        height: auto;
+        max-height: 100%;
+        object-fit: contain;
+        display: block;
+        transition: transform 0.5s, opacity 0.3s;
+        position: relative;
+        z-index: 2;
+        opacity: 0;
+        background: #0a0a0a;
+    }
+    
+    .plot-image[src] {
+        opacity: 1;
+    }
+    
+    .viz-card:hover .plot-wrapper {
+        border-color: var(--accent-color);
+        box-shadow: 0 0 20px rgba(191, 18, 77, 0.3);
+    }
+    
+    .viz-card:hover .plot-image {
+        transform: scale(1.02);
+    }
+
+    .card-header {
+        padding: 1.5rem;
+        border-bottom: 1px solid var(--glass-border);
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+    }
+
+    .card-header h3 {
+        margin: 0;
+        font-size: 1.5rem;
+        font-weight: 600;
+    }
+
+    .card-header i {
+        font-size: 1.5rem;
+        color: var(--accent-color);
+        margin-right: 0.75rem;
+    }
+</style>
+{% endblock %}
