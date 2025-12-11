@@ -36,22 +36,22 @@
     {% endif %}
 
     <div class="cards-grid">
-    <div class="card">
-        <div class="card-icon">
-            <i class="fas fa-table"></i>
+        <div class="card">
+            <div class="card-icon">
+                <i class="fas fa-table"></i>
+            </div>
+            <h3>Dataset Overview</h3>
+            <p>Explore the complete heart attack risk dataset with detailed attributes and patient information.</p>
+            <a href="{{ url_for('dataset_page') }}" class="btn btn-primary">View Visualizations</a>
         </div>
-        <h3>Dataset Overview</h3>
-        <p>Explore the complete heart attack risk dataset with detailed attributes and patient information.</p>
-        <a href="{{ url_for('dataset') }}" class="btn btn-primary">View Dataset</a>
-    </div>
 
-    <div class="card">
-        <div class="card-icon">
-            <i class="fas fa-chart-line"></i>
+        <div class="card">
+            <div class="card-icon">
+                <i class="fas fa-info-circle"></i>
+            </div>
+            <h3>About the Project</h3>
+            <p>This project analyzes various health metrics to predict and visualize heart attack risks using advanced data processing.</p>
         </div>
-        <h3>Data Analysis</h3>
-        <p>Statistical analysis using NumPy and Pandas to uncover insights from the data.</p>
-        <a href="{{ url_for('analysis') }}" class="btn btn-primary">Analyze Data</a>
     </div>
 
     <div class="section">
